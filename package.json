@@ -4,8 +4,8 @@
     "description": "",
     "main": "./bin/rest-api.js",
     "scripts": {
-        "run": "echo 'Hello'",
-        "test": "jest"
+        "start": "node bin/rest-api.js",
+        "test": "npx jest --runInBand --detectOpenHandles"
     },
     "keywords": [],
     "author": "",
