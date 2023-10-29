@@ -1,10 +1,14 @@
 import {
+    DeleteQuestionRequest,
     DeleteSurveyRequest,
+    GetQuestionRequest,
+    GetQuestionsRequest,
     GetSurveyRequest,
     GetSurveysRequest,
+    UpdateQuestionRequest,
     UpdateSurveyRequest,
 } from "./inputs";
-import { ISurveyOpsListener } from "./outbound";
+import { IQuestionOpsListener, ISurveyOpsListener } from "./outbound";
 import {
     BaseResponse,
     GetSurveyResponse,
@@ -34,6 +38,23 @@ export interface ISurveyOps {
     ): Promise<void>;
 }
 
-export interface IQuestionOps {}
+export interface IQuestionOps {
+    updateQuestion(
+        request: UpdateQuestionRequest,
+        listener: IQuestionOpsListener
+    ): Promise<void>;
+    getQuestionsBySurvey(
+        request: GetQuestionsRequest,
+        listener: IQuestionOpsListener
+    ): Promise<void>;
+    getQuestionById(
+        request: GetQuestionRequest,
+        listener: IQuestionOpsListener
+    ): Promise<void>;
+    deleteQuestionById(
+        request: DeleteQuestionRequest,
+        listener: IQuestionOpsListener
+    ): Promise<void>;
+}
 
 export interface ISurveyResponseOps {}

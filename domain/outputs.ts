@@ -1,4 +1,4 @@
-import { Survey } from "./entities";
+import { Question, Survey } from "./entities";
 
 export type BaseResponse = {
     isSuccess: boolean;
@@ -21,6 +21,12 @@ export type GetSurveyResponse = BaseResponse & {
 export type GetSurveysResponse = BaseResponse & {
     data: Array<Survey>;
 };
+
+export type UpdateQuestionResponse = BaseResponse & { data: Question };
+
+export type GetQuestionsResponse = BaseResponse & { data: Array<Question> };
+
+export type GetQuestionResponse = BaseResponse & { data: Question };
 
 export class OutputGenerator {
     public static generateError(

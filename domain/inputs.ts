@@ -23,3 +23,17 @@ export type UpdateQuestionRequest = {
     type: string;
     title: string;
 };
+
+export type GetQuestionsRequest = {
+    surveyId: string;
+};
+
+export type GetQuestionRequest = {
+    surveyId: string;
+    name: string;
+};
+
+export type DeleteQuestionRequest = {
+    surveyId: string;
+    name: string;
+};

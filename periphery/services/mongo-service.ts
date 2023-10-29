@@ -4,19 +4,32 @@ import {
     GetSurveyRequest,
     DeleteSurveyRequest,
     GetSurveysRequest,
+    DeleteQuestionRequest,
+    GetQuestionRequest,
+    GetQuestionsRequest,
+    UpdateQuestionRequest,
 } from "../../domain/inputs";
-import { ISurveyStorageService } from "../../domain/outbound";
+import {
+    IQuestionStorageService,
+    ISurveyStorageService,
+} from "../../domain/outbound";
 import {
     UpdateSurveyResponse,
     GetSurveyResponse,
     BaseResponse,
     GetSurveysResponse,
     OutputGenerator,
+    GetQuestionResponse,
+    GetQuestionsResponse,
+    UpdateQuestionResponse,
 } from "../../domain/outputs";
-import { Survey } from "../../domain/entities";
+import { Question, Survey } from "../../domain/entities";
 
-export class MongoService implements ISurveyStorageService {
+export class MongoService
+    implements ISurveyStorageService, IQuestionStorageService
+{
     public static COLL_SURVEYS = "surveys";
+    public static COLL_QUESTIONS = "questions";
 
     host: string;
     port: number;
@@ -24,6 +37,7 @@ export class MongoService implements ISurveyStorageService {
     theClient: MongoClient;
     theDb: Db;
     collSurveys: Collection;
+    collQuestions: Collection;
 
     setHost(host: string): MongoService {
         this.host = host;
@@ -49,6 +63,9 @@ export class MongoService implements ISurveyStorageService {
             this.theClient = new MongoClient(url);
             this.theDb = this.theClient.db();
             this.collSurveys = this.theDb.collection(MongoService.COLL_SURVEYS);
+            this.collQuestions = this.theDb.collection(
+                MongoService.COLL_QUESTIONS
+            );
         }
     }
 
@@ -174,6 +191,120 @@ export class MongoService implements ISurveyStorageService {
         }
     }
 
+    async updateQuestion(
+        request: UpdateQuestionRequest
+    ): Promise<UpdateQuestionResponse> {
+        try {
+            let { name, title, type } = request;
+            let surveyId = ObjectId.createFromHexString(request.surveyId);
+            let condition = { surveyId, name };
+            let updateFields = { $set: { title, type } };
+            await this.collQuestions.updateOne(condition, updateFields, {
+                upsert: true,
+            });
+
+            let doc = await this.getQuestionBySurveyName(surveyId, name);
+            ({ name, title, type } = doc);
+
+            let question = {
+                surveyId: doc.surveyId.toHexString(),
+                name,
+                title,
+                type,
+            };
+
+            return <UpdateQuestionResponse>(
+                OutputGenerator.generateSuccess(question)
+            );
+        } catch (e: any) {
+            let message = `${e}`;
+            console.log(message);
+            return <UpdateQuestionResponse>(
+                OutputGenerator.generateError(message)
+            );
+        }
+    }
+
+    async getQuestionsBySurvey(
+        request: GetQuestionsRequest
+    ): Promise<GetQuestionsResponse> {
+        try {
+            let { surveyId } = request;
+            let cursor = this.collQuestions
+                .find({ surveyId: ObjectId.createFromHexString(surveyId) })
+                .sort({ name: 1 });
+            let questions = await cursor
+                .map((document) => {
+                    let { name, title, type } = document;
+                    return <Question>{
+                        surveyId: document.surveyId.toHexString(),
+                        name,
+                        title,
+                        type,
+                    };
+                })
+                .toArray();
+
+            return <GetQuestionsResponse>(
+                OutputGenerator.generateSuccess(questions)
+            );
+        } catch (e: any) {
+            let message = `${e}`;
+            console.log(message);
+            return <GetQuestionsResponse>OutputGenerator.generateError(message);
+        }
+    }
+
+    async getQuestionById(
+        request: GetQuestionRequest
+    ): Promise<GetQuestionResponse> {
+        try {
+            let { name } = request;
+            let surveyId = ObjectId.createFromHexString(request.surveyId);
+            let document = await this.getQuestionBySurveyName(surveyId, name);
+            if (!document) {
+                return <GetQuestionResponse>(
+                    OutputGenerator.generateError(
+                        `Question with survey Id ${request.surveyId} and name ${name} not found`,
+                        404
+                    )
+                );
+            }
+
+            let title = "",
+                type = "";
+            ({ name, title, type } = document);
+            let question = <Question>{
+                surveyId: document.surveyId.toHexString(),
+                name,
+                title,
+                type,
+            };
+
+            return <GetQuestionResponse>(
+                OutputGenerator.generateSuccess(question)
+            );
+        } catch (e: any) {
+            let message = `${e}`;
+            console.log(message);
+            return <GetQuestionResponse>OutputGenerator.generateError(message);
+        }
+    }
+
+    async deleteQuestionById(
+        request: DeleteQuestionRequest
+    ): Promise<BaseResponse> {
+        try {
+            let { name } = request;
+            let surveyId = ObjectId.createFromHexString(request.surveyId);
+            await this.collQuestions.deleteOne({ surveyId, name });
+        } catch (e: any) {
+            let message = `${e}`;
+            console.log(message);
+            return OutputGenerator.generateError(message);
+        }
+    }
+
     async shutdown() {
         if (this.theClient) {
             this.theClient.close();
@@ -184,5 +315,13 @@ export class MongoService implements ISurveyStorageService {
     private async getDocumentById(theCollection: Collection, theID: ObjectId) {
         await this.ensureConnection();
         return await theCollection.findOne({ _id: theID });
+    }
+
+    private async getQuestionBySurveyName(surveyId: ObjectId, name: string) {
+        await this.ensureConnection();
+        return await this.collQuestions.findOne({
+            surveyId,
+            name,
+        });
     }
 }
