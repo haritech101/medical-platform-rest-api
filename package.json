@@ -5,7 +5,7 @@
     "main": "./bin/rest-api.js",
     "scripts": {
         "start": "node bin/rest-api.js",
-        "test": "npx jest --runInBand --detectOpenHandles"
+        "test": "npx jest --runInBand --detectOpenHandles --watchAll"
     },
     "keywords": [],
     "author": "",
