@@ -1,0 +1,8 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "target": "ES5"
+    }
+}
