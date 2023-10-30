@@ -6,32 +6,31 @@ import {
     GetSurveyResponse,
     BaseResponse,
 } from "../../domain/outputs";
+import { BasePresenter } from "./base-presenter";
 
-export class SurveyPresenter implements ISurveyOpsListener {
-    private httpOutput: Response;
-
-    static fromHttpOutput(httpOutput: Response) {
-        return new SurveyPresenter().setHttpOutput(httpOutput);
-    }
-
-    setHttpOutput(httpOutput: Response): SurveyPresenter {
-        this.httpOutput = httpOutput;
-        return this;
+export class SurveyPresenter
+    extends BasePresenter
+    implements ISurveyOpsListener
+{
+    static fromHttpOutput(httpOutput: Response): SurveyPresenter {
+        let presenter = new SurveyPresenter();
+        presenter.setHttpOutput(httpOutput);
+        return presenter;
     }
 
     async onSurveyUpdated(response: UpdateSurveyResponse): Promise<void> {
-        this.httpOutput.json(response);
+        this.respondAsUsual(response);
     }
 
     async onSurveysFetched(response: GetSurveysResponse): Promise<void> {
-        this.httpOutput.json(response);
+        this.respondAsUsual(response);
     }
 
     async onSurveyFetched(response: GetSurveyResponse): Promise<void> {
-        this.httpOutput.json(response);
+        this.respondAsUsual(response);
     }
 
     async onSurveyDeleted(response: BaseResponse): Promise<void> {
-        this.httpOutput.json(response);
+        this.respondAsUsual(response);
     }
 }
