@@ -277,6 +277,7 @@ describe("HTTP requests for survey", () => {
             let httpResponse = await axios({
                 method: "get",
                 url: `${url}/surveys/${surveyId}`,
+                validateStatus: () => true,
             });
 
             let surveyResponse = <GetSurveyResponse>httpResponse.data;
