@@ -1,18 +1,21 @@
 import { Request, Response, Router } from "express";
-import { ISurveyOps } from "../../domain/inbound";
+import { IQuestionOps, ISurveyOps } from "../../domain/inbound";
+import { UpdateSurveyRequest } from "../../domain/inputs";
+import { QuestionPresenter } from "../presenters/question-presenter";
 import { SurveyPresenter } from "../presenters/survey-presenter";
-import {
-    GetSurveyRequest,
-    GetSurveysRequest,
-    UpdateSurveyRequest,
-} from "../../domain/inputs";
 
 export class SurveyController {
     router: Router;
     surveyOps: ISurveyOps;
+    questionOps: IQuestionOps;
 
     setSurveyOps(ops: ISurveyOps): SurveyController {
         this.surveyOps = ops;
+        return this;
+    }
+
+    setQuestionOps(ops: IQuestionOps): SurveyController {
+        this.questionOps = ops;
         return this;
     }
 
@@ -21,6 +24,7 @@ export class SurveyController {
 
         this.router.get("/", this.getSurveys.bind(this));
         this.router.get("/:id", this.getSurvey.bind(this));
+        this.router.get("/:id/questions", this.getQuestions.bind(this));
         this.router.post("/", this.updateSurvey.bind(this));
         this.router.put("/:id", this.updateSurvey.bind(this));
         this.router.delete("/:id", this.deleteSurvey.bind(this));
@@ -65,6 +69,13 @@ export class SurveyController {
         await this.surveyOps.deleteSurvey(
             { id: req.params.id },
             SurveyPresenter.fromHttpOutput(res)
+        );
+    }
+
+    async getQuestions(req: Request, res: Response) {
+        await this.questionOps.getQuestionsBySurvey(
+            { surveyId: req.params.id },
+            QuestionPresenter.fromHttpOutput(res)
         );
     }
 

@@ -4,6 +4,7 @@ import { ExpressHTTPService } from "../services/express-http-service";
 import { expect } from "chai";
 import axios from "axios";
 import { SurveyController } from "../controllers/survey-controller";
+import { QuestionController } from "../controllers/question-controller";
 
 describe("Express HTTP Service", () => {
     let expressHttpService: ExpressHTTPService = null;
@@ -13,11 +14,13 @@ describe("Express HTTP Service", () => {
         config({ path: ".local/.env" });
 
         httpPort = parseInt(process.env[EnvVars.httpPort] || Defaults.httpPort);
-        let controller = new SurveyController();
+        let surveyController = new SurveyController();
+        let questionController = new QuestionController();
 
         expressHttpService = new ExpressHTTPService()
             .setPort(httpPort)
-            .setSurveyController(controller);
+            .setSurveyController(surveyController)
+            .setQuestionController(questionController);
         await expressHttpService.start();
     });
 

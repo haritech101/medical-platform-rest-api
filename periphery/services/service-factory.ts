@@ -1,6 +1,8 @@
-import { ISurveyOps } from "../../domain/inbound";
+import { IQuestionOps, ISurveyOps } from "../../domain/inbound";
 import { ISurveyStorageService } from "../../domain/outbound";
+import { QuestionUseCases } from "../../domain/use-cases/question-use-cases";
 import { SurveyUseCases } from "../../domain/use-cases/survey-use-cases";
+import { QuestionController } from "../controllers/question-controller";
 import { SurveyController } from "../controllers/survey-controller";
 import { ExpressHTTPService } from "./express-http-service";
 import { MongoService } from "./mongo-service";
@@ -24,6 +26,9 @@ export class ServiceFactory {
 
     private surveyOps: ISurveyOps;
     private surveyController: SurveyController;
+
+    private questionOps: IQuestionOps;
+    private questionController: QuestionController;
 
     private httpService: ExpressHTTPService;
 
@@ -55,14 +60,21 @@ export class ServiceFactory {
         this.surveyOps = new SurveyUseCases().setSurveyStorageService(
             this.mongoService
         );
+        this.questionOps = new QuestionUseCases().setQuestionStorageService(
+            this.mongoService
+        );
 
-        this.surveyController = new SurveyController().setSurveyOps(
-            this.surveyOps
+        this.surveyController = new SurveyController()
+            .setSurveyOps(this.surveyOps)
+            .setQuestionOps(this.questionOps);
+        this.questionController = new QuestionController().setQuestionOps(
+            this.questionOps
         );
 
         this.httpService = new ExpressHTTPService()
             .setPort(httpPort)
-            .setSurveyController(this.surveyController);
+            .setSurveyController(this.surveyController)
+            .setQuestionController(this.questionController);
     }
 
     public getHttpService(): ExpressHTTPService {

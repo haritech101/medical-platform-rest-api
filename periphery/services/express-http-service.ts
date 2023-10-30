@@ -3,12 +3,14 @@ import { Server } from "http";
 import { ISurveyOps } from "../../domain/inbound";
 import { SurveyController } from "../controllers/survey-controller";
 import bodyParser from "body-parser";
+import { QuestionController } from "../controllers/question-controller";
 
 export class ExpressHTTPService {
     port: number;
     app: Application;
     httpServer: Server;
     surveyController: SurveyController;
+    questionController: QuestionController;
 
     setPort(port: number): ExpressHTTPService {
         this.port = port;
@@ -17,6 +19,11 @@ export class ExpressHTTPService {
 
     setSurveyController(controller: SurveyController): ExpressHTTPService {
         this.surveyController = controller;
+        return this;
+    }
+
+    setQuestionController(controller: QuestionController): ExpressHTTPService {
+        this.questionController = controller;
         return this;
     }
 
@@ -33,6 +40,7 @@ export class ExpressHTTPService {
         });
 
         this.app.use("/surveys", this.surveyController.getRouter());
+        this.app.use("/questions", this.questionController.getRouter());
     }
 
     async stop() {
