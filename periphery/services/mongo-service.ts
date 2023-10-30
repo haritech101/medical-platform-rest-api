@@ -197,17 +197,35 @@ export class MongoService
         try {
             let { name, title, type } = request;
             let surveyId = ObjectId.createFromHexString(request.surveyId);
-            let condition = { surveyId, name };
-            let updateFields = { $set: { title, type } };
-            await this.collQuestions.updateOne(condition, updateFields, {
-                upsert: true,
-            });
 
-            let doc = await this.getQuestionBySurveyName(surveyId, name);
-            ({ name, title, type } = doc);
+            let questionId: ObjectId;
+            if (request.id) {
+                questionId = ObjectId.createFromHexString(request.id);
+
+                await this.collQuestions.updateOne(
+                    { _id: questionId },
+                    { $set: { name, title, type } }
+                );
+            } else {
+                let result = await this.collQuestions.insertOne({
+                    surveyId,
+                    name,
+                    title,
+                    type,
+                });
+                questionId = result.insertedId;
+            }
+
+            let savedDoc = await this.getDocumentById(
+                this.collQuestions,
+                questionId
+            );
+
+            ({ name, title, type } = savedDoc);
 
             let question = {
-                surveyId: doc.surveyId.toHexString(),
+                id: savedDoc._id.toHexString(),
+                surveyId: savedDoc.surveyId.toHexString(),
                 name,
                 title,
                 type,
@@ -237,6 +255,7 @@ export class MongoService
                 .map((document) => {
                     let { name, title, type } = document;
                     return <Question>{
+                        id: document._id.toHexString(),
                         surveyId: document.surveyId.toHexString(),
                         name,
                         title,
@@ -259,22 +278,20 @@ export class MongoService
         request: GetQuestionRequest
     ): Promise<GetQuestionResponse> {
         try {
-            let { name } = request;
-            let surveyId = ObjectId.createFromHexString(request.surveyId);
-            let document = await this.getQuestionBySurveyName(surveyId, name);
+            let id = ObjectId.createFromHexString(request.id);
+            let document = await this.getDocumentById(this.collQuestions, id);
             if (!document) {
                 return <GetQuestionResponse>(
                     OutputGenerator.generateError(
-                        `Question with survey Id ${request.surveyId} and name ${name} not found`,
+                        `Question with ID ${id} not found`,
                         404
                     )
                 );
             }
 
-            let title = "",
-                type = "";
-            ({ name, title, type } = document);
+            let { name, title, type } = document;
             let question = <Question>{
+                id: document._id.toHexString(),
                 surveyId: document.surveyId.toHexString(),
                 name,
                 title,
@@ -295,9 +312,9 @@ export class MongoService
         request: DeleteQuestionRequest
     ): Promise<BaseResponse> {
         try {
-            let { name } = request;
-            let surveyId = ObjectId.createFromHexString(request.surveyId);
-            await this.collQuestions.deleteOne({ surveyId, name });
+            let _id = ObjectId.createFromHexString(request.id);
+            await this.collQuestions.deleteOne({ _id });
+            return OutputGenerator.generateSuccess();
         } catch (e: any) {
             let message = `${e}`;
             console.log(message);

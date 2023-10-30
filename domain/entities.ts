@@ -5,6 +5,7 @@ export type Survey = {
 };
 
 export type Question = {
+    id: string;
     surveyId: string;
     name: string;
     title: string;

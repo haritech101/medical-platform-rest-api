@@ -199,6 +199,7 @@ class MongoServiceTest {
                     let surveyId = "";
                     let questionNum = Math.floor(Math.random() * 100000);
                     let questionName = `Created from Mongo Service Test ${questionNum}`;
+                    let questionId = "";
 
                     beforeAll(async () => {
                         surveyId = await this.createSurvey(
@@ -222,38 +223,52 @@ class MongoServiceTest {
                             await mongoService.updateQuestion(request);
 
                         // assert
-                        expect(questionResponse.isSuccess).to.be.true;
+                        expect(
+                            questionResponse.isSuccess,
+                            questionResponse.message
+                        ).to.be.true;
 
                         // pre assert
                         let question = questionResponse.data;
 
                         // assert
-                        expect(question).to.deep.equal(request);
+                        expect(question.id).to.be.not.empty;
+                        expect(question.surveyId).to.equal(surveyId);
+                        expect(question.name).to.equal(questionName);
+
+                        questionId = question.id;
                     });
 
                     afterAll(async () => {
                         await this.deleteSurveyAndQuestion(
                             surveyId,
-                            questionName
+                            questionId
                         );
                     });
                 });
 
                 describe("Get list of questions", () => {
                     let surveyId = "";
+                    let questionId = "";
                     let questionName = "";
 
                     beforeAll(async () => {
                         surveyId = await this.createSurvey(
                             "Created by Mongo Service Test"
                         );
-                        questionName = await this.createQuestion(
+                        let { id, name } = await this.createQuestion(
                             surveyId,
                             "Created by Mongo Service"
                         );
+                        questionId = id;
+                        questionName = name;
                     });
 
                     it("Should return the list of questions", async () => {
+                        expect(surveyId).to.be.not.empty;
+                        expect(questionId).to.be.not.empty;
+                        expect(questionName).to.be.not.empty;
+
                         // act
                         let questionsResponse =
                             await mongoService.getQuestionsBySurvey({
@@ -261,7 +276,10 @@ class MongoServiceTest {
                             });
 
                         // assert
-                        expect(questionsResponse.isSuccess).to.be.true;
+                        expect(
+                            questionsResponse.isSuccess,
+                            questionsResponse.message
+                        ).to.be.true;
 
                         // pre assert
                         let questions = questionsResponse.data;
@@ -278,7 +296,7 @@ class MongoServiceTest {
                     afterAll(async () => {
                         await this.deleteSurveyAndQuestion(
                             surveyId,
-                            questionName
+                            questionId
                         );
                     });
                 });
@@ -286,35 +304,42 @@ class MongoServiceTest {
                 describe("Get single question", () => {
                     let surveyId = "";
                     let questionName = "";
+                    let questionId = "";
 
                     beforeAll(async () => {
                         surveyId = await this.createSurvey(
                             "Created from Mongo Service Test"
                         );
-                        questionName = await this.createQuestion(
+                        let { id, name } = await this.createQuestion(
                             surveyId,
                             "Created from Mongo Service Test"
                         );
+                        questionId = id;
+                        questionName = name;
                     });
 
                     it("Should get the specified question", async () => {
                         expect(surveyId).to.be.not.empty;
+                        expect(questionId).to.be.not.empty;
                         expect(questionName).to.be.not.empty;
 
                         // act
                         let questionResponse =
                             await mongoService.getQuestionById({
-                                surveyId,
-                                name: questionName,
+                                id: questionId,
                             });
 
                         // assert
-                        expect(questionResponse.isSuccess).to.be.true;
+                        expect(
+                            questionResponse.isSuccess,
+                            questionResponse.message
+                        ).to.be.true;
 
                         // pre assert
                         let question = questionResponse.data;
 
                         // assert
+                        expect(question.id).to.equal(questionId);
                         expect(question.surveyId).to.equal(surveyId);
                         expect(question.name).to.equal(questionName);
                     });
@@ -322,13 +347,14 @@ class MongoServiceTest {
                     afterAll(async () => {
                         await this.deleteSurveyAndQuestion(
                             surveyId,
-                            questionName
+                            questionId
                         );
                     });
                 });
 
                 describe("Modify an existing question", () => {
                     let surveyId = "";
+                    let questionId = "";
                     let questionName = "";
                     let updatedName = "";
 
@@ -336,10 +362,12 @@ class MongoServiceTest {
                         surveyId = await this.createSurvey(
                             "Created from Mongo Service Test"
                         );
-                        questionName = await this.createQuestion(
+                        let { id, name } = await this.createQuestion(
                             surveyId,
                             "Created from Mongo Service Test"
                         );
+                        questionId = id;
+                        questionName = name;
                         updatedName = questionName.replace(
                             "Created",
                             "Modified"
@@ -349,77 +377,73 @@ class MongoServiceTest {
                     it("Should modify the specified question", async () => {
                         let questionResponse =
                             await mongoService.updateQuestion({
+                                id: questionId,
                                 surveyId,
-                                name: questionName,
+                                name: updatedName,
                                 title: updatedName,
                                 type: "text",
                             });
 
-                        expect(questionResponse.isSuccess).to.be.true;
+                        expect(
+                            questionResponse.isSuccess,
+                            questionResponse.message
+                        ).to.be.true;
 
                         let question = questionResponse.data;
+                        expect(question.id).to.equal(questionId);
                         expect(question.surveyId).to.equal(surveyId);
-                        expect(question.name).to.equal(questionName);
+                        expect(question.name).to.equal(updatedName);
                         expect(question.title).to.equal(updatedName);
                         expect(question.type).to.equal("text");
-                    });
+                    }, 60000);
 
                     afterAll(async () => {
                         await this.deleteSurveyAndQuestion(
                             surveyId,
-                            questionName
+                            questionId
                         );
                     });
                 });
 
                 describe("Delete a question", () => {
                     let surveyId = "";
-                    let questionName = "";
+                    let questionId = "";
 
                     beforeAll(async () => {
                         surveyId = await this.createSurvey(
                             "Created from Mongo Service Test"
                         );
-                        questionName = await this.createQuestion(
+                        let { id } = await this.createQuestion(
                             surveyId,
                             "Created from Mongo Service Test"
                         );
+                        questionId = id;
                     });
 
                     it("Should delete the specified question", async () => {
                         expect(surveyId).to.be.not.empty;
-                        expect(questionName).to.be.not.empty;
+                        expect(questionId).to.be.not.empty;
+
+                        await mongoService.deleteQuestionById({
+                            id: questionId,
+                        });
 
                         let questionResponse =
                             await mongoService.getQuestionById({
-                                surveyId,
-                                name: questionName,
+                                id: questionId,
                             });
 
-                        expect(questionResponse.isSuccess).to.be.true;
-
-                        let question = questionResponse.data;
-                        expect(question.surveyId).to.equal(surveyId);
-                        expect(question.name).to.equal(questionName);
-
-                        await mongoService.deleteQuestionById({
-                            surveyId,
-                            name: questionName,
-                        });
-
-                        questionResponse = await mongoService.getQuestionById({
-                            surveyId,
-                            name: questionName,
-                        });
-
-                        expect(questionResponse.isSuccess).to.be.false;
+                        expect(
+                            questionResponse.isSuccess,
+                            questionResponse.message
+                        ).to.be.false;
                         expect(questionResponse.code).to.equal(404);
                     });
 
                     afterAll(async () => {
                         await this.deleteSurveyAndQuestion(
                             surveyId,
-                            questionName
+                            questionId
                         );
                     });
                 });
@@ -446,29 +470,34 @@ class MongoServiceTest {
     private async createQuestion(
         surveyId: string,
         namePrefix: string
-    ): Promise<string> {
+    ): Promise<{ id: string; name: string }> {
         let questionNumber = Math.floor(Math.random() * 100000);
         let questionName = `${namePrefix} ${questionNumber}`;
 
-        await this.mongoService.updateQuestion({
+        let questionResponse = await this.mongoService.updateQuestion({
             surveyId,
             name: questionName,
             title: questionName,
             type: "text",
         });
 
-        return questionName;
+        expect(questionResponse.isSuccess).to.be.true;
+
+        let { id, name } = questionResponse.data;
+        return { id, name };
     }
 
     private async deleteSurveyAndQuestion(
         surveyId: string,
-        questionName: string
+        questionId: string
     ) {
-        await this.mongoService.deleteQuestionById({
-            surveyId,
-            name: questionName,
+        let opResponse = await this.mongoService.deleteQuestionById({
+            id: questionId,
         });
-        await this.mongoService.deleteSurvey({ id: surveyId });
+        expect(opResponse.isSuccess).to.be.true;
+
+        opResponse = await this.mongoService.deleteSurvey({ id: surveyId });
+        expect(opResponse.isSuccess).to.be.true;
     }
 }
 

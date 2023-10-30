@@ -18,6 +18,7 @@ export type DeleteSurveyRequest = {
 };
 
 export type UpdateQuestionRequest = {
+    id?: string;
     surveyId: string;
     name: string;
     type: string;
@@ -29,11 +30,9 @@ export type GetQuestionsRequest = {
 };
 
 export type GetQuestionRequest = {
-    surveyId: string;
-    name: string;
+    id: string;
 };
 
 export type DeleteQuestionRequest = {
-    surveyId: string;
-    name: string;
+    id: string;
 };
