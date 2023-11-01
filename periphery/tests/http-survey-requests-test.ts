@@ -245,6 +245,7 @@ describe("HTTP requests for survey", () => {
                     type: "text",
                     validators: [{ type: "email" }],
                     htmlId: "inputEmail",
+                    order: 1,
                 },
             });
 
@@ -271,6 +272,7 @@ describe("HTTP requests for survey", () => {
                         },
                     ],
                     htmlId: "inputGender",
+                    order: 2,
                 },
             });
 

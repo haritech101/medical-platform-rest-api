@@ -49,6 +49,7 @@ export class SurveyJSPresenter
             for (let key in question) {
                 if (key == "id") continue;
                 if (key == "surveyId") continue;
+                if (key == "order") continue;
                 if (key == "htmlId") {
                     element["id"] = question[key];
                     continue;
