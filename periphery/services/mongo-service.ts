@@ -166,7 +166,7 @@ export class MongoService
         try {
             await this.ensureConnection();
 
-            let cursor = this.collSurveys.find().sort({ name: 1 });
+            let cursor = this.collSurveys.find().sort({ title: 1 });
 
             let surveys = await cursor
                 .map((document) => {
@@ -273,7 +273,7 @@ export class MongoService
             let { surveyId } = request;
             let cursor = this.collQuestions
                 .find({ surveyId: ObjectId.createFromHexString(surveyId) })
-                .sort({ name: 1 });
+                .sort({ order: 1 });
             let questions = await cursor
                 .map((document) => {
                     let { name, title, type, order } = document;
