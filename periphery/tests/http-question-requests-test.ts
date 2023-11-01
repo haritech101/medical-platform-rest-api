@@ -57,6 +57,9 @@ describe("HTTP requests for questions", () => {
                     name: questionName,
                     title: questionName,
                     type: "text",
+                    order: 5,
+                    showOtherItem: true,
+                    showNoneItem: true,
                 },
             });
 
@@ -71,6 +74,9 @@ describe("HTTP requests for questions", () => {
             expect(question.name).to.equal(questionName);
             expect(question.title).to.equal(questionName);
             expect(question.type).to.equal("text");
+            expect(question.order).to.equal(5);
+            expect(question.showOtherItem).to.be.true;
+            expect(question.showNoneItem).to.be.true;
 
             questionId = question.id;
         });
@@ -108,6 +114,7 @@ describe("HTTP requests for questions", () => {
                     name: modifiedName,
                     title: modifiedName,
                     type: "text",
+                    order: 1,
                 },
             });
 
@@ -121,6 +128,9 @@ describe("HTTP requests for questions", () => {
             expect(question.surveyId).to.equal(surveyId);
             expect(question.name).to.equal(modifiedName);
             expect(question.title).to.equal(modifiedName);
+            expect(question.order).to.equal(1);
+            expect(question.showOtherItem).to.be.true;
+            expect(question.showNoneItem).to.be.true;
         });
 
         afterAll(async () => {
@@ -162,6 +172,11 @@ describe("HTTP requests for questions", () => {
             );
             expect(needle).to.be.not.undefined;
             expect(needle.name).to.equal(questionName);
+            expect(needle.title).to.equal(questionName);
+            expect(needle.type).to.equal("text");
+            expect(needle.order).to.equal(5);
+            expect(needle.showOtherItem).to.be.true;
+            expect(needle.showNoneItem).to.be.true;
         });
 
         afterAll(async () => {
@@ -202,6 +217,10 @@ describe("HTTP requests for questions", () => {
             expect(question.surveyId).to.equal(surveyId);
             expect(question.name).to.equal(questionName);
             expect(question.title).to.equal(questionName);
+            expect(question.type).to.equal("text");
+            expect(question.order).to.equal(5);
+            expect(question.showOtherItem).to.be.true;
+            expect(question.showNoneItem).to.be.true;
         });
 
         afterAll(async () => {
@@ -259,6 +278,7 @@ describe("HTTP requests for questions", () => {
             validateStatus: () => true,
             data: <UpdateSurveyRequest>{
                 name,
+                title: name,
                 description: name,
             },
         });
@@ -283,6 +303,9 @@ describe("HTTP requests for questions", () => {
                 name,
                 title: name,
                 type: "text",
+                order: 5,
+                showOtherItem: true,
+                showNoneItem: true,
             },
         });
 

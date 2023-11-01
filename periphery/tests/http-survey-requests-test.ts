@@ -1,11 +1,16 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { expect } from "chai";
 import { config } from "dotenv";
-import { GetSurveyRequest, UpdateSurveyRequest } from "../../domain/inputs";
+import {
+    GetSurveyRequest,
+    UpdateQuestionRequest,
+    UpdateSurveyRequest,
+} from "../../domain/inputs";
 import { Defaults, EnvVars, ServiceFactory } from "../services/service-factory";
 import {
     GetSurveyResponse,
     GetSurveysResponse,
+    UpdateQuestionResponse,
     UpdateSurveyResponse,
 } from "../../domain/outputs";
 
@@ -33,15 +38,19 @@ describe("HTTP requests for survey", () => {
             // arrange
             let surveyNumber = Math.floor(Math.random() * 10000);
             let surveyName = `Survey ${surveyNumber}`;
+            let request: UpdateSurveyRequest = {
+                name: surveyName,
+                title: surveyName,
+                description: "",
+                previewText: "Preview",
+                requiredText: "!",
+            };
 
             // act
             let httpResponse = await axios({
                 url: `${url}/surveys`,
                 method: "POST",
-                data: <UpdateSurveyRequest>{
-                    name: surveyName,
-                    description: "",
-                },
+                data: request,
                 validateStatus: () => true,
             });
 
@@ -59,7 +68,11 @@ describe("HTTP requests for survey", () => {
 
             // assert
             expect(survey.id).to.be.not.undefined;
-            expect(survey.name).to.equal(surveyName);
+
+            // pre assert
+            for (let key in request) {
+                expect(survey[key]).to.equal(request[key]);
+            }
 
             surveyId = survey.id;
         });
@@ -85,11 +98,14 @@ describe("HTTP requests for survey", () => {
                 validateStatus: () => true,
                 data: <UpdateSurveyRequest>{
                     name: surveyName,
+                    title: surveyName,
                     description: "",
+                    previewText: "Preview",
+                    requiredText: "!",
                 },
             });
 
-            let surveyId = (<UpdateSurveyResponse>httpResponse.data).data.id;
+            surveyId = (<UpdateSurveyResponse>httpResponse.data).data.id;
         });
 
         it("Should return the list of surveys", async () => {
@@ -111,10 +127,15 @@ describe("HTTP requests for survey", () => {
 
             // pre assert
             let surveys = surveysResponse.data;
-            let needle = surveys.find((survey) => survey.name == surveyName);
+            let needle = surveys.find((survey) => survey.id == surveyId);
 
             // assert
             expect(needle).to.be.not.undefined;
+            expect(needle.name).to.equal(surveyName);
+            expect(needle.title).to.equal(surveyName);
+            expect(needle.description).to.be.empty;
+            expect(needle.previewText).to.equal("Preview");
+            expect(needle.requiredText).to.equal("!");
         });
 
         afterAll(async () => {
@@ -138,7 +159,10 @@ describe("HTTP requests for survey", () => {
                 validateStatus: () => true,
                 data: <UpdateSurveyRequest>{
                     name: surveyName,
+                    title: surveyName,
                     description: "",
+                    previewText: "Preview",
+                    requiredText: "!",
                 },
             });
 
@@ -172,7 +196,10 @@ describe("HTTP requests for survey", () => {
 
             // assert
             expect(survey.name).to.equal(surveyName);
+            expect(survey.title).to.equal(surveyName);
             expect(survey.id).to.equal(surveyId);
+            expect(survey.previewText).to.equal("Preview");
+            expect(survey.requiredText).to.equal("!");
         });
 
         afterAll(async () => {
@@ -197,6 +224,7 @@ describe("HTTP requests for survey", () => {
                 validateStatus: () => true,
                 data: <UpdateSurveyRequest>{
                     name: surveyName,
+                    title: surveyName,
                     description: "",
                 },
             });
@@ -214,6 +242,7 @@ describe("HTTP requests for survey", () => {
                 validateStatus: () => true,
                 data: <UpdateSurveyRequest>{
                     name: updatedName,
+                    title: updatedName,
                     description: "",
                 },
             });
@@ -233,6 +262,8 @@ describe("HTTP requests for survey", () => {
             // assert
             expect(survey.id).to.equal(surveyId);
             expect(survey.name).to.equal(updatedName);
+            expect(survey.title).to.equal(updatedName);
+            expect(survey.previewText);
         }, 60000);
 
         afterAll(async () => {

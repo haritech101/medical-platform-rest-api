@@ -44,7 +44,10 @@ class MongoServiceTest {
                         let surveyName = `Survey ${surveyNumber}`;
                         let updateSurveyRequest: UpdateSurveyRequest = {
                             name: surveyName,
+                            title: surveyName,
                             description: "",
+                            previewText: "Preview",
+                            requiredText: "!",
                         };
 
                         // act
@@ -64,10 +67,22 @@ class MongoServiceTest {
                         surveyId = survey.id;
 
                         // pre assert
-                        let { name } = survey;
+                        let {
+                            name,
+                            title,
+                            description,
+                            previewText,
+                            requiredText,
+                        } = survey;
 
                         // assert
-                        expect(name).to.equal(surveyName);
+                        expect({
+                            name,
+                            title,
+                            description,
+                            previewText,
+                            requiredText,
+                        }).to.deep.equal(updateSurveyRequest);
                     });
 
                     afterAll(async () => {
@@ -80,12 +95,18 @@ class MongoServiceTest {
                     let surveyId = "";
                     let surveyNumber = Math.floor(Math.random() * 10000);
                     let surveyName = `Survey ${surveyNumber}`;
+                    let updateSurveyRequest: UpdateSurveyRequest = {
+                        name: surveyName,
+                        title: surveyName,
+                        description: "",
+                        previewText: "Preview",
+                        requiredText: "!",
+                    };
 
                     beforeAll(async () => {
-                        let response = await mongoService.updateSurvey({
-                            name: surveyName,
-                            description: "",
-                        });
+                        let response = await mongoService.updateSurvey(
+                            updateSurveyRequest
+                        );
                         surveyId = response.data.id;
                     });
 
@@ -105,11 +126,17 @@ class MongoServiceTest {
                         // Pre assert
                         let surveys = surveysResponse.data;
                         let needle = surveys.find(
-                            (survey) => survey.name == surveyName
+                            (survey) => survey.id == surveyId
                         );
 
                         // Assert
                         expect(needle).to.be.not.undefined;
+                        expect(needle.id).to.be.not.empty;
+                        for (let key in updateSurveyRequest) {
+                            expect(needle[key]).to.equal(
+                                updateSurveyRequest[key]
+                            );
+                        }
                     });
 
                     afterAll(async () => {
@@ -125,7 +152,10 @@ class MongoServiceTest {
                     beforeAll(async () => {
                         let request: UpdateSurveyRequest = {
                             name: surveyName,
+                            title: surveyName,
                             description: "",
+                            previewText: "Preview",
+                            requiredText: "!",
                         };
 
                         let updateResponse = await mongoService.updateSurvey(
@@ -147,6 +177,14 @@ class MongoServiceTest {
 
                         // assert
                         expect(surveyResponse.isSuccess).to.be.true;
+
+                        // pre assert
+                        let survey = surveyResponse.data;
+                        expect(survey.id).to.equal(surveyId);
+                        expect(survey.name).to.equal(surveyName);
+                        expect(survey.title).to.equal(surveyName);
+                        expect(survey.previewText).to.equal("Preview");
+                        expect(survey.requiredText).to.equal("!");
                     });
 
                     afterAll(async () => {
@@ -162,6 +200,7 @@ class MongoServiceTest {
                         let surveyName = `Survey ${surveyNumber}`;
                         let surveyResponse = await mongoService.updateSurvey({
                             name: surveyName,
+                            title: surveyName,
                             description: "",
                         });
                         surveyId = surveyResponse.data.id;
@@ -216,6 +255,9 @@ class MongoServiceTest {
                             name: questionName,
                             title: questionName,
                             type: "text",
+                            showNoneItem: true,
+                            showOtherItem: true,
+                            order: 5,
                         };
 
                         // act
@@ -235,6 +277,13 @@ class MongoServiceTest {
                         expect(question.id).to.be.not.empty;
                         expect(question.surveyId).to.equal(surveyId);
                         expect(question.name).to.equal(questionName);
+                        expect(question.showNoneItem).to.equal(
+                            request.showNoneItem
+                        );
+                        expect(question.showOtherItem).to.equal(
+                            request.showOtherItem
+                        );
+                        expect(question.order).to.equal(5);
 
                         questionId = question.id;
                     });
@@ -291,6 +340,12 @@ class MongoServiceTest {
 
                         // assert
                         expect(needle).to.be.not.undefined;
+                        expect(needle.id).to.equal(questionId);
+                        expect(needle.name).to.equal(questionName);
+                        expect(needle.title).to.equal(questionName);
+                        expect(needle.order).to.equal(5);
+                        expect(needle.showOtherItem).to.be.true;
+                        expect(needle.showNoneItem).to.be.true;
                     });
 
                     afterAll(async () => {
@@ -342,6 +397,9 @@ class MongoServiceTest {
                         expect(question.id).to.equal(questionId);
                         expect(question.surveyId).to.equal(surveyId);
                         expect(question.name).to.equal(questionName);
+                        expect(question.order).to.equal(5);
+                        expect(question.showOtherItem).to.be.true;
+                        expect(question.showNoneItem).to.be.true;
                     });
 
                     afterAll(async () => {
@@ -382,6 +440,7 @@ class MongoServiceTest {
                                 name: updatedName,
                                 title: updatedName,
                                 type: "text",
+                                order: 1,
                             });
 
                         expect(
@@ -395,6 +454,9 @@ class MongoServiceTest {
                         expect(question.name).to.equal(updatedName);
                         expect(question.title).to.equal(updatedName);
                         expect(question.type).to.equal("text");
+                        expect(question.order).to.equal(1);
+                        expect(question.showNoneItem).to.be.true;
+                        expect(question.showOtherItem).to.be.true;
                     }, 60000);
 
                     afterAll(async () => {
@@ -461,6 +523,7 @@ class MongoServiceTest {
 
         let surveyResponse = await this.mongoService.updateSurvey({
             name: surveyName,
+            title: surveyName,
             description: "",
         });
 
@@ -470,7 +533,7 @@ class MongoServiceTest {
     private async createQuestion(
         surveyId: string,
         namePrefix: string
-    ): Promise<{ id: string; name: string }> {
+    ): Promise<{ id: string; name: string; order: number }> {
         let questionNumber = Math.floor(Math.random() * 100000);
         let questionName = `${namePrefix} ${questionNumber}`;
 
@@ -479,12 +542,15 @@ class MongoServiceTest {
             name: questionName,
             title: questionName,
             type: "text",
+            order: 5,
+            showNoneItem: true,
+            showOtherItem: true,
         });
 
         expect(questionResponse.isSuccess).to.be.true;
 
-        let { id, name } = questionResponse.data;
-        return { id, name };
+        let { id, name, order } = questionResponse.data;
+        return { id, name, order };
     }
 
     private async deleteSurveyAndQuestion(

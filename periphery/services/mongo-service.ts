@@ -75,21 +75,20 @@ export class MongoService
         try {
             await this.ensureConnection();
 
-            let { name, description } = request;
-            let payload = { name, description };
+            let payload = {};
+            for (let key in request) {
+                payload[key] = request[key];
+            }
 
             let theID: ObjectId = null;
             if (request.id) {
                 theID = ObjectId.createFromHexString(request.id);
 
                 let updateFields = {
-                    $set: { name, description },
+                    $set: payload,
                 };
 
-                let result = await this.collSurveys.updateOne(
-                    { _id: theID },
-                    updateFields
-                );
+                await this.collSurveys.updateOne({ _id: theID }, updateFields);
             } else {
                 let result = await this.collSurveys.insertOne(payload);
                 theID = result.insertedId;
@@ -100,13 +99,17 @@ export class MongoService
                 theID
             );
 
-            let { _id } = theDocument;
-            ({ name, description } = theDocument);
-            let createdSurvey: Survey = {
+            let { _id, name, title, description } = theDocument;
+            let createdSurvey = {
                 id: _id.toHexString(),
                 name,
+                title,
                 description,
             };
+            for (let key in theDocument) {
+                if (key == "_id" || key in createdSurvey) continue;
+                createdSurvey[key] = theDocument[key];
+            }
 
             return <UpdateSurveyResponse>(
                 OutputGenerator.generateSuccess(createdSurvey)
@@ -138,12 +141,19 @@ export class MongoService
                 );
             }
 
-            let { name, description } = doc;
+            let { name, title, description } = doc;
             let survey = <Survey>{
                 id: doc._id.toHexString(),
                 name,
+                title,
                 description,
             };
+
+            for (let key in doc) {
+                if (key == "_id" || key in survey) continue;
+                survey[key] = doc[key];
+            }
+
             return <GetSurveyResponse>OutputGenerator.generateSuccess(survey);
         } catch (e: any) {
             let message = `${e}`;
@@ -160,12 +170,20 @@ export class MongoService
 
             let surveys = await cursor
                 .map((document) => {
-                    let { name, description } = document;
-                    return <Survey>{
+                    let { name, title, description } = document;
+                    let survey: Survey = {
                         id: document._id.toHexString(),
                         name,
+                        title,
                         description,
                     };
+
+                    for (let key in document) {
+                        if (key == "_id" && key in survey) continue;
+                        survey[key] = document[key];
+                    }
+
+                    return survey;
                 })
                 .toArray();
 
@@ -195,24 +213,29 @@ export class MongoService
         request: UpdateQuestionRequest
     ): Promise<UpdateQuestionResponse> {
         try {
-            let { name, title, type } = request;
             let surveyId = ObjectId.createFromHexString(request.surveyId);
-
             let questionId: ObjectId;
+
+            let payload = {};
+            for (let key in request) {
+                if (key == "id") continue;
+                if (key == "surveyId") {
+                    payload["surveyId"] = surveyId;
+                    continue;
+                }
+
+                payload[key] = request[key];
+            }
+
             if (request.id) {
                 questionId = ObjectId.createFromHexString(request.id);
 
                 await this.collQuestions.updateOne(
                     { _id: questionId },
-                    { $set: { name, title, type } }
+                    { $set: payload }
                 );
             } else {
-                let result = await this.collQuestions.insertOne({
-                    surveyId,
-                    name,
-                    title,
-                    type,
-                });
+                let result = await this.collQuestions.insertOne(payload);
                 questionId = result.insertedId;
             }
 
@@ -221,15 +244,15 @@ export class MongoService
                 questionId
             );
 
-            ({ name, title, type } = savedDoc);
-
             let question = {
                 id: savedDoc._id.toHexString(),
                 surveyId: savedDoc.surveyId.toHexString(),
-                name,
-                title,
-                type,
             };
+
+            for (let key in savedDoc) {
+                if (key == "_id" || key == "surveyId") continue;
+                question[key] = savedDoc[key];
+            }
 
             return <UpdateQuestionResponse>(
                 OutputGenerator.generateSuccess(question)
@@ -253,14 +276,24 @@ export class MongoService
                 .sort({ name: 1 });
             let questions = await cursor
                 .map((document) => {
-                    let { name, title, type } = document;
-                    return <Question>{
+                    let { name, title, type, order } = document;
+                    let question: Question = {
                         id: document._id.toHexString(),
                         surveyId: document.surveyId.toHexString(),
                         name,
                         title,
                         type,
+                        order,
                     };
+
+                    for (let key in document) {
+                        if (key == "_id") continue;
+                        if (key in question) continue;
+
+                        question[key] = document[key];
+                    }
+
+                    return question;
                 })
                 .toArray();
 
@@ -289,14 +322,22 @@ export class MongoService
                 );
             }
 
-            let { name, title, type } = document;
+            let { name, title, type, order } = document;
             let question = <Question>{
                 id: document._id.toHexString(),
                 surveyId: document.surveyId.toHexString(),
                 name,
                 title,
                 type,
+                order,
             };
+
+            for (let key in document) {
+                if (key == "_id") continue;
+                if (key in question) continue;
+
+                question[key] = document[key];
+            }
 
             return <GetQuestionResponse>(
                 OutputGenerator.generateSuccess(question)
