@@ -3,6 +3,7 @@ import { IQuestionOps, ISurveyOps } from "../../domain/inbound";
 import { UpdateSurveyRequest } from "../../domain/inputs";
 import { QuestionPresenter } from "../presenters/question-presenter";
 import { SurveyPresenter } from "../presenters/survey-presenter";
+import { SurveyJSPresenter } from "../presenters/surveyjs-presenter";
 
 export class SurveyController {
     router: Router;
@@ -28,7 +29,7 @@ export class SurveyController {
         this.router.post("/", this.updateSurvey.bind(this));
         this.router.put("/:id", this.updateSurvey.bind(this));
         this.router.delete("/:id", this.deleteSurvey.bind(this));
-        //TODO: this.router.get("/:id/surveyjs");
+        this.router.get("/:id/surveyjs", this.getHierarchy.bind(this));
     }
 
     async getSurveys(req: Request, res: Response) {
@@ -47,13 +48,15 @@ export class SurveyController {
         );
     }
 
-    async updateSurvey(req: Request, res: Response) {
-        let { name, description } = req.body;
+    async getHierarchy(req: Request, res: Response) {
+        await this.surveyOps.getSurveyHierarchy(
+            { id: req.params.id },
+            SurveyJSPresenter.fromHttpOutput(res)
+        );
+    }
 
-        let requestPayload: UpdateSurveyRequest = {
-            name,
-            description,
-        };
+    async updateSurvey(req: Request, res: Response) {
+        let requestPayload: UpdateSurveyRequest = req.body;
 
         if (req.params.id) {
             requestPayload.id = req.params.id;

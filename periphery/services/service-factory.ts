@@ -57,9 +57,9 @@ export class ServiceFactory {
             process.env[EnvVars.httpPort] || Defaults.httpPort
         );
 
-        this.surveyOps = new SurveyUseCases().setSurveyStorageService(
-            this.mongoService
-        );
+        this.surveyOps = new SurveyUseCases()
+            .setSurveyStorageService(this.mongoService)
+            .setQuestionStorageService(this.mongoService);
         this.questionOps = new QuestionUseCases().setQuestionStorageService(
             this.mongoService
         );

@@ -5,15 +5,28 @@ import {
     DeleteSurveyRequest,
     GetSurveysRequest,
 } from "../inputs";
-import { ISurveyOpsListener, ISurveyStorageService } from "../outbound";
+import {
+    IQuestionStorageService,
+    ISurveyOpsListener,
+    ISurveyStorageService,
+} from "../outbound";
+import { GetSurveyResponse, OutputGenerator } from "../outputs";
 
 export class SurveyUseCases implements ISurveyOps {
     private surveyStorageService: ISurveyStorageService;
+    private questionStorageService: IQuestionStorageService;
 
     public setSurveyStorageService(
         service: ISurveyStorageService
     ): SurveyUseCases {
         this.surveyStorageService = service;
+        return this;
+    }
+
+    public setQuestionStorageService(
+        service: IQuestionStorageService
+    ): SurveyUseCases {
+        this.questionStorageService = service;
         return this;
     }
 
@@ -43,6 +56,49 @@ export class SurveyUseCases implements ISurveyOps {
             request
         );
         await listener.onSurveysFetched(surveysResponse);
+    }
+
+    public async getSurveyHierarchy(
+        request: GetSurveyRequest,
+        listener: ISurveyOpsListener
+    ): Promise<void> {
+        try {
+            let { id } = request;
+            let surveyResponse = await this.surveyStorageService.getSurvey({
+                id,
+            });
+            if (!surveyResponse.isSuccess) {
+                listener.onSurveyHierarchyFetched(surveyResponse);
+                return;
+            }
+            let survey = surveyResponse.data;
+
+            let questionsResponse =
+                await this.questionStorageService.getQuestionsBySurvey({
+                    surveyId: id,
+                });
+            if (!questionsResponse.isSuccess) {
+                let { code, message, isSuccess } = questionsResponse;
+                listener.onSurveyHierarchyFetched({
+                    isSuccess,
+                    code,
+                    message,
+                    data: null,
+                });
+                return;
+            }
+
+            survey.questions = questionsResponse.data;
+            listener.onSurveyHierarchyFetched(
+                <GetSurveyResponse>OutputGenerator.generateSuccess(survey)
+            );
+        } catch (e: any) {
+            let message = `${e}`;
+            console.log(message);
+            listener.onSurveyHierarchyFetched(
+                <GetSurveyResponse>OutputGenerator.generateError(message)
+            );
+        }
     }
 
     public async deleteSurvey(

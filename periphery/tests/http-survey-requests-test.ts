@@ -211,6 +211,153 @@ describe("HTTP requests for survey", () => {
         });
     });
 
+    describe("Get the SurveyJS formatted form of a survey", () => {
+        let surveyId = "";
+        let questionIds = [];
+
+        beforeAll(async () => {
+            let httpResponse: AxiosResponse;
+            let surveyName = "The Survey";
+            let id = "";
+
+            httpResponse = await axios({
+                url: `${url}/surveys`,
+                method: "post",
+                validateStatus: () => true,
+                data: <UpdateSurveyRequest>{
+                    name: surveyName,
+                    title: surveyName,
+                    description: surveyName,
+                },
+            });
+
+            ({ id } = (<UpdateSurveyResponse>httpResponse.data).data);
+            surveyId = id;
+
+            httpResponse = await axios({
+                url: `${url}/questions`,
+                method: "post",
+                validateStatus: () => true,
+                data: <UpdateQuestionRequest>{
+                    surveyId,
+                    name: "emailAddress",
+                    title: "Enter you email address",
+                    type: "text",
+                    validators: [{ type: "email" }],
+                    htmlId: "inputEmail",
+                },
+            });
+
+            ({ id } = (<UpdateQuestionResponse>httpResponse.data).data);
+            questionIds.push(id);
+
+            httpResponse = await axios({
+                url: `${url}/questions`,
+                method: "post",
+                validateStatus: () => true,
+                data: <UpdateQuestionRequest>{
+                    surveyId,
+                    name: "gender",
+                    title: "Choose your gender",
+                    type: "radiogroup",
+                    choices: [
+                        {
+                            value: "m",
+                            text: "Male",
+                        },
+                        {
+                            value: "f",
+                            text: "Female",
+                        },
+                    ],
+                    htmlId: "inputGender",
+                },
+            });
+
+            ({ id } = (<UpdateQuestionResponse>httpResponse.data).data);
+            questionIds.push(id);
+        });
+
+        it("Should return the SurveyJS formatted data", async () => {
+            // arrange
+            let status = 0;
+            let isSuccess = false;
+            let data;
+
+            // act
+            let httpResponse = await axios({
+                url: `${url}/surveys/${surveyId}/surveyjs`,
+                method: "get",
+                validateStatus: () => true,
+            });
+
+            // pre assert
+            ({ status, data } = httpResponse);
+
+            // assert
+            expect(status).to.equal(200);
+
+            // pre assert
+            let surveyResponse = <GetSurveyResponse>data;
+            ({ isSuccess, data } = surveyResponse);
+
+            // assert
+            expect(isSuccess).to.be.true;
+
+            // pre assert
+            let reference = {
+                name: "The Survey",
+                title: "The Survey",
+                description: "The Survey",
+                elements: [
+                    {
+                        name: "emailAddress",
+                        title: "Enter you email address",
+                        type: "text",
+                        validators: [{ type: "email" }],
+                        id: "inputEmail",
+                    },
+                    {
+                        name: "gender",
+                        title: "Choose your gender",
+                        type: "radiogroup",
+                        choices: [
+                            {
+                                value: "m",
+                                text: "Male",
+                            },
+                            {
+                                value: "f",
+                                text: "Female",
+                            },
+                        ],
+                        id: "inputGender",
+                    },
+                ],
+            };
+
+            expect(data).to.deep.equal(reference);
+        });
+
+        afterAll(async () => {
+            let httpResponse: AxiosResponse;
+
+            for (let questionId of questionIds) {
+                httpResponse = await axios({
+                    url: `${url}/questions/${questionId}`,
+                    method: "delete",
+                    validateStatus: () => true,
+                });
+            }
+
+            httpResponse = await axios({
+                url: `${url}/surveys/${surveyId}`,
+                method: "delete",
+                validateStatus: () => true,
+            });
+        });
+    });
+
     describe("Update an existing survey", () => {
         let surveyId = "";
         let surveyNumber = Math.floor(Math.random() * 10000);

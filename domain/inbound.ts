@@ -32,6 +32,11 @@ export interface ISurveyOps {
         listener: ISurveyOpsListener
     ): Promise<void>;
 
+    getSurveyHierarchy(
+        request: GetSurveyRequest,
+        listener: ISurveyOpsListener
+    ): Promise<void>;
+
     deleteSurvey(
         request: DeleteSurveyRequest,
         listener: ISurveyOpsListener

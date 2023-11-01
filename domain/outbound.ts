@@ -23,6 +23,7 @@ export interface ISurveyOpsListener {
     onSurveysFetched(response: GetSurveysResponse): Promise<void>;
     onSurveyFetched(response: GetSurveyResponse): Promise<void>;
     onSurveyDeleted(response: BaseResponse): Promise<void>;
+    onSurveyHierarchyFetched(response: GetSurveyResponse): Promise<void>;
 }
 
 export interface IQuestionOpsListener {

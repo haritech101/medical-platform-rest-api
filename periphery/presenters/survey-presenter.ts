@@ -33,4 +33,8 @@ export class SurveyPresenter
     async onSurveyDeleted(response: BaseResponse): Promise<void> {
         this.respondAsUsual(response);
     }
+
+    async onSurveyHierarchyFetched(response: GetSurveyResponse): Promise<void> {
+        return null;
+    }
 }
