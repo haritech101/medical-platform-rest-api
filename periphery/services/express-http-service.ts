@@ -4,6 +4,7 @@ import { ISurveyOps } from "../../domain/inbound";
 import { SurveyController } from "../controllers/survey-controller";
 import bodyParser from "body-parser";
 import { QuestionController } from "../controllers/question-controller";
+import cors from "express-cors";
 
 export class ExpressHTTPService {
     port: number;
@@ -31,6 +32,11 @@ export class ExpressHTTPService {
         this.app = express();
         this.httpServer = this.app.listen(this.port);
 
+        this.app.use(
+            cors({
+                origin: "*",
+            })
+        );
         this.app.use(bodyParser.json());
 
         this.app.get("/hello", async (req: Request, res: Response) => {
