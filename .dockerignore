@@ -1,0 +1,16 @@
+.git
+.gitignore
+node_modules
+.vscode
+*/**/*.ts
+**/*.js.map
+**/tests
+.local
+coverage
+jest.config.js
+tsconfig.json
+README.md
+docker-compose*.yml
+Dockerfile
+.dockerignore
+deploy.sh
