@@ -179,7 +179,9 @@ export class MongoService
                     };
 
                     for (let key in document) {
-                        if (key == "_id" && key in survey) continue;
+                        if (key == "_id") continue;
+                        if (key in survey) continue;
+
                         survey[key] = document[key];
                     }
 
