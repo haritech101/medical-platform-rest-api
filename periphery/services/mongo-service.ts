@@ -8,9 +8,13 @@ import {
     GetQuestionRequest,
     GetQuestionsRequest,
     UpdateQuestionRequest,
+    GetSurveyEntriesRequest,
+    GetSurveyEntryRequest,
+    UpdateSurveyEntryRequest,
 } from "../../domain/inputs";
 import {
     IQuestionStorageService,
+    ISurveyEntryStorageService,
     ISurveyStorageService,
 } from "../../domain/outbound";
 import {
@@ -22,14 +26,21 @@ import {
     GetQuestionResponse,
     GetQuestionsResponse,
     UpdateQuestionResponse,
+    GetSurveyEntriesResponse,
+    GetSurveyEntryResponse,
+    UpdateSurveyEntryResponse,
 } from "../../domain/outputs";
-import { Question, Survey } from "../../domain/entities";
+import { Question, Survey, SurveyEntry } from "../../domain/entities";
 
 export class MongoService
-    implements ISurveyStorageService, IQuestionStorageService
+    implements
+        ISurveyStorageService,
+        IQuestionStorageService,
+        ISurveyEntryStorageService
 {
     public static COLL_SURVEYS = "surveys";
     public static COLL_QUESTIONS = "questions";
+    public static COLL_RESPONSES = "responses";
 
     host: string;
     port: number;
@@ -38,6 +49,7 @@ export class MongoService
     theDb: Db;
     collSurveys: Collection;
     collQuestions: Collection;
+    collResponses: Collection;
 
     setHost(host: string): MongoService {
         this.host = host;
@@ -65,6 +77,9 @@ export class MongoService
             this.collSurveys = this.theDb.collection(MongoService.COLL_SURVEYS);
             this.collQuestions = this.theDb.collection(
                 MongoService.COLL_QUESTIONS
+            );
+            this.collResponses = this.theDb.collection(
+                MongoService.COLL_RESPONSES
             );
         }
     }
@@ -362,6 +377,133 @@ export class MongoService
             let message = `${e}`;
             console.log(message);
             return OutputGenerator.generateError(message);
+        }
+    }
+
+    async updateEntry(
+        request: UpdateSurveyEntryRequest
+    ): Promise<UpdateSurveyEntryResponse> {
+        try {
+            let { surveyId } = request;
+            let surveyOid = ObjectId.createFromHexString(surveyId);
+            let timestamp = new Date();
+
+            let payload = { surveyId: surveyOid, timestamp };
+
+            for (let key in request) {
+                if (key == "surveyId") continue;
+
+                payload[key] = request[key];
+            }
+
+            let result = await this.collResponses.insertOne(payload);
+            let id = result.insertedId;
+
+            let docu = await this.getDocumentById(this.collResponses, id);
+
+            let entry: SurveyEntry = {
+                id: docu._id.toHexString(),
+                surveyId: docu.surveyId.toHexString(),
+            };
+            for (let key in docu) {
+                if (key == "_id") continue;
+                if (key == "surveyId") continue;
+
+                entry[key] = docu[key];
+            }
+
+            return <UpdateSurveyEntryResponse>(
+                OutputGenerator.generateSuccess(entry)
+            );
+        } catch (e) {
+            let message = `${e}`;
+            console.log(e);
+            return <UpdateSurveyEntryResponse>(
+                OutputGenerator.generateError(message)
+            );
+        }
+    }
+
+    async getEntries(
+        request: GetSurveyEntriesRequest
+    ): Promise<GetSurveyEntriesResponse> {
+        try {
+            let { surveyId } = request;
+            let oid = ObjectId.createFromHexString(surveyId);
+
+            let docs = this.collResponses.find({ surveyId: oid });
+
+            let entries = await docs
+                .map((docu) => {
+                    let entry: SurveyEntry = { id: docu._id.toHexString() };
+
+                    for (let key in docu) {
+                        if (key == "_id") continue;
+                        entry[key] = docu[key];
+                    }
+
+                    return entry;
+                })
+                .toArray();
+
+            return <GetSurveyEntriesResponse>(
+                OutputGenerator.generateSuccess(entries)
+            );
+        } catch (e: any) {
+            let message = `${e}`;
+            console.log(message);
+            return <GetSurveyEntriesResponse>(
+                OutputGenerator.generateError(message)
+            );
+        }
+    }
+
+    async getEntryById(
+        request: GetSurveyEntryRequest
+    ): Promise<GetSurveyEntryResponse> {
+        try {
+            let oid = ObjectId.createFromHexString(request.id);
+            let docu = await this.collResponses.findOne({ _id: oid });
+
+            if (!docu) {
+                let message = `Survey response with ID ${request.id} not found`;
+                console.log(message);
+
+                return <GetSurveyEntryResponse>(
+                    OutputGenerator.generateError(message, 404)
+                );
+            }
+
+            let entry: SurveyEntry = {
+                id: docu._id.toHexString(),
+                surveyId: docu.surveyId.toHexString(),
+            };
+
+            for (let key in docu) {
+                if (key == "_id") continue;
+                if (key == "surveyId") continue;
+
+                entry[key] = docu[key];
+            }
+
+            return <GetSurveyEntryResponse>(
+                OutputGenerator.generateSuccess(entry)
+            );
+        } catch (e) {
+            let message = `${e}`;
+            console.log(message);
+            return <GetSurveyEntryResponse>(
+                OutputGenerator.generateError(message)
+            );
+        }
+    }
+
+    async deleteEntryById(id: string): Promise<void> {
+        try {
+            let oid = ObjectId.createFromHexString(id);
+            await this.collResponses.deleteOne({ _id: oid });
+        } catch (e) {
+            console.log(`${e}`);
         }
     }
 

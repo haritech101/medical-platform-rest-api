@@ -1,14 +1,20 @@
 import { Request, Response, Router } from "express";
-import { IQuestionOps, ISurveyOps } from "../../domain/inbound";
+import {
+    IQuestionOps,
+    ISurveyEntryOps,
+    ISurveyOps,
+} from "../../domain/inbound";
 import { UpdateSurveyRequest } from "../../domain/inputs";
 import { QuestionPresenter } from "../presenters/question-presenter";
 import { SurveyPresenter } from "../presenters/survey-presenter";
 import { SurveyJSPresenter } from "../presenters/surveyjs-presenter";
+import { SurveyEntryPresenter } from "../presenters/survey-entry-presenter";
 
 export class SurveyController {
-    router: Router;
-    surveyOps: ISurveyOps;
-    questionOps: IQuestionOps;
+    private router: Router;
+    private surveyOps: ISurveyOps;
+    private questionOps: IQuestionOps;
+    private surveyEntryOps: ISurveyEntryOps;
 
     setSurveyOps(ops: ISurveyOps): SurveyController {
         this.surveyOps = ops;
@@ -17,6 +23,11 @@ export class SurveyController {
 
     setQuestionOps(ops: IQuestionOps): SurveyController {
         this.questionOps = ops;
+        return this;
+    }
+
+    setSurveyEntryOps(ops: ISurveyEntryOps): SurveyController {
+        this.surveyEntryOps = ops;
         return this;
     }
 
@@ -30,6 +41,7 @@ export class SurveyController {
         this.router.put("/:id", this.updateSurvey.bind(this));
         this.router.delete("/:id", this.deleteSurvey.bind(this));
         this.router.get("/:id/surveyjs", this.getHierarchy.bind(this));
+        this.router.get("/:id/responses", this.getSurveyEntries.bind(this));
     }
 
     async getSurveys(req: Request, res: Response) {
@@ -52,6 +64,13 @@ export class SurveyController {
         await this.surveyOps.getSurveyHierarchy(
             { id: req.params.id },
             SurveyJSPresenter.fromHttpOutput(res)
+        );
+    }
+
+    async getSurveyEntries(req: Request, res: Response) {
+        await this.surveyEntryOps.getEntries(
+            { surveyId: req.params.id },
+            SurveyEntryPresenter.fromHttpOutput(res)
         );
     }
 

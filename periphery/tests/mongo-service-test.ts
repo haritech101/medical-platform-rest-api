@@ -7,6 +7,7 @@ import {
     GetSurveyRequest,
     GetSurveysRequest,
     UpdateQuestionRequest,
+    UpdateSurveyEntryRequest,
     UpdateSurveyRequest,
 } from "../../domain/inputs";
 
@@ -511,6 +512,90 @@ class MongoServiceTest {
                 });
             });
 
+            describe("Survey Responses", () => {
+                describe("Create survey response", () => {
+                    let surveyId = "";
+                    let entryId = "";
+
+                    beforeAll(async () => {
+                        surveyId = await this.createSurvey(
+                            "Created in Mongo Service Test"
+                        );
+                    });
+
+                    it("Should create the survey response", async () => {
+                        // arrange
+                        let request: UpdateSurveyEntryRequest = {
+                            surveyId,
+                            age: 24,
+                            gender: "F",
+                        };
+
+                        // act
+                        let response = await mongoService.updateEntry(request);
+
+                        // assert
+                        expect(response.isSuccess).to.be.true;
+
+                        // pre assert
+                        let entry = response.data;
+
+                        // assert
+                        expect(entry.id).to.be.not.empty;
+                        expect(entry.surveyId).to.equal(surveyId);
+                        expect(entry.timestamp).to.be.instanceOf(Date);
+                        expect(entry.age).to.equal(request.age);
+                        expect(entry.gender).to.equal(request.gender);
+
+                        entryId = entry.id;
+                    });
+
+                    afterAll(async () => {
+                        await this.deleteEntry(entryId);
+                        await this.deleteSurvey(surveyId);
+                    });
+                });
+
+                describe("Get list of responses for a survey", () => {
+                    let surveyId = "";
+                    let entryId = "";
+
+                    beforeAll(async () => {
+                        surveyId = await this.createSurvey(
+                            "Created in Mongo Service Test"
+                        );
+                        entryId = await this.createEntry(surveyId);
+                    });
+
+                    it("Should return the list of responses", async () => {
+                        // act
+                        let entriesResponse = await mongoService.getEntries({
+                            surveyId,
+                        });
+
+                        // assert
+                        expect(entriesResponse.isSuccess).to.be.true;
+
+                        // pre assert
+                        let entries = entriesResponse.data;
+                        let needle = entries.find(
+                            (entry) => entry.id == entryId
+                        );
+
+                        // assert
+                        expect(needle).to.be.not.undefined;
+                        expect(needle.timestamp).to.be.instanceOf(Date);
+                        expect(needle.gender).to.equal("F");
+                        expect(needle.age).to.equal(24);
+                    });
+
+                    afterAll(async () => {
+                        await this.deleteEntry(entryId);
+                        await this.deleteSurvey(surveyId);
+                    });
+                });
+            });
+
             afterAll(async () => {
                 // await mongoService.shutdown();
             });
@@ -553,6 +638,22 @@ class MongoServiceTest {
         return { id, name, order };
     }
 
+    private async createEntry(surveyId: string): Promise<string> {
+        let response = await this.mongoService.updateEntry({
+            surveyId,
+            age: 24,
+            gender: "F",
+        });
+
+        expect(response.isSuccess).to.be.true;
+
+        return response.data.id;
+    }
+
+    private async deleteSurvey(surveyId: string) {
+        await this.mongoService.deleteSurvey({ id: surveyId });
+    }
+
     private async deleteSurveyAndQuestion(
         surveyId: string,
         questionId: string
@@ -564,6 +665,10 @@ class MongoServiceTest {
 
         opResponse = await this.mongoService.deleteSurvey({ id: surveyId });
         expect(opResponse.isSuccess).to.be.true;
+    }
+
+    private async deleteEntry(entryId: string) {
+        await this.mongoService.deleteEntryById(entryId);
     }
 }
 

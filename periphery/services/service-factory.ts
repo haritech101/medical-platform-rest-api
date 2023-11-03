@@ -1,9 +1,11 @@
 import { IQuestionOps, ISurveyOps } from "../../domain/inbound";
 import { ISurveyStorageService } from "../../domain/outbound";
+import { EntryUseCase } from "../../domain/use-cases/entry-use-case";
 import { QuestionUseCases } from "../../domain/use-cases/question-use-cases";
 import { SurveyUseCases } from "../../domain/use-cases/survey-use-cases";
 import { QuestionController } from "../controllers/question-controller";
 import { SurveyController } from "../controllers/survey-controller";
+import { SurveyEntryController } from "../controllers/survey-entry-controller";
 import { ExpressHTTPService } from "./express-http-service";
 import { MongoService } from "./mongo-service";
 
@@ -25,10 +27,12 @@ export class ServiceFactory {
     private mongoService: MongoService;
 
     private surveyOps: ISurveyOps;
-    private surveyController: SurveyController;
-
     private questionOps: IQuestionOps;
+    private entryOps: EntryUseCase;
+
+    private surveyController: SurveyController;
     private questionController: QuestionController;
+    private surveyEntryController: SurveyEntryController;
 
     private httpService: ExpressHTTPService;
 
@@ -63,21 +67,32 @@ export class ServiceFactory {
         this.questionOps = new QuestionUseCases().setQuestionStorageService(
             this.mongoService
         );
+        this.entryOps = new EntryUseCase().setSurveyEntryStorageService(
+            this.mongoService
+        );
 
         this.surveyController = new SurveyController()
             .setSurveyOps(this.surveyOps)
-            .setQuestionOps(this.questionOps);
+            .setQuestionOps(this.questionOps)
+            .setSurveyEntryOps(this.entryOps);
         this.questionController = new QuestionController().setQuestionOps(
             this.questionOps
         );
+        this.surveyEntryController =
+            new SurveyEntryController().setSurveyEntryOps(this.entryOps);
 
         this.httpService = new ExpressHTTPService()
             .setPort(httpPort)
             .setSurveyController(this.surveyController)
-            .setQuestionController(this.questionController);
+            .setQuestionController(this.questionController)
+            .setSurveyEntryController(this.surveyEntryController);
     }
 
     public getHttpService(): ExpressHTTPService {
         return this.httpService;
+    }
+
+    public getMongoService(): MongoService {
+        return this.mongoService;
     }
 }

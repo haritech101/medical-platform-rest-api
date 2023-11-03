@@ -169,3 +169,9 @@ export type Question = {
     items?: Array<MultiTextItem>;
     itemSize?: number;
 };
+
+export type SurveyEntry = {
+    id: string;
+    surveyId: string;
+    timestamp: Date;
+} & any;

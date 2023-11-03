@@ -158,3 +158,16 @@ export type GetQuestionRequest = {
 export type DeleteQuestionRequest = {
     id: string;
 };
+
+export type UpdateSurveyEntryRequest = {
+    id?: string;
+    surveyId: string;
+} & any;
+
+export type GetSurveyEntriesRequest = {
+    surveyId: string;
+};
+
+export type GetSurveyEntryRequest = {
+    id: string;
+};
