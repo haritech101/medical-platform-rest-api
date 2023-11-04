@@ -1,4 +1,12 @@
-import { MultiTextItem, QuestionChoice, RateValue } from "./entities";
+import {
+    FieldValidator,
+    MultiTextItem,
+    NumericValidator,
+    QuestionChoice,
+    RateValue,
+    RegexValidator,
+    TextValidator,
+} from "./entities";
 
 export type UpdateSurveyRequest = {
     id?: string;
@@ -84,7 +92,9 @@ export type UpdateQuestionRequest = {
     showCommentArea?: boolean;
     showOtherItem?: boolean;
     state?: "default" | "expanded" | "collapsed";
-    validators?: Array<any>;
+    validators?: Array<
+        FieldValidator | TextValidator | NumericValidator | RegexValidator
+    >;
     value?: any;
     autocomplete?: string;
     dataList?: Array<string>;

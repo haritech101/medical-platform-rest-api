@@ -56,6 +56,7 @@ export type MultiTextItem = {
 
 export type FieldValidator = {
     type: "numeric" | "text" | "email" | "expression" | "answercount" | "regex";
+    text: string;
 };
 
 export type NumericValidator = FieldValidator & {
@@ -107,7 +108,9 @@ export type Question = {
     showCommentArea?: boolean;
     showOtherItem?: boolean;
     state?: "default" | "expanded" | "collapsed";
-    validators?: Array<any>;
+    validators?: Array<
+        FieldValidator | TextValidator | NumericValidator | RegexValidator
+    >;
     value?: any;
     autocomplete?: string;
     dataList?: Array<string>;
