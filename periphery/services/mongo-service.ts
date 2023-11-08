@@ -66,7 +66,7 @@ export class MongoService
         return this;
     }
 
-    private async ensureConnection(): Promise<void> {
+    public async ensureConnection(): Promise<void> {
         if (this.theClient) return;
 
         let url = `mongodb://${this.host}:${this.port}/${this.db}`;
