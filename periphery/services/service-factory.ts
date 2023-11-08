@@ -14,12 +14,17 @@ export class EnvVars {
     public static mongoPort = "MONGO_PORT";
     public static mongoDb = "MONGO_DB";
     public static httpPort = "HTTP_PORT";
+    public static mysqlHost = "MYSQL_HOST";
+    public static mysqlUser = "MYSQL_USER";
+    public static mysqlPassword = "MYSQL_PASSWORD";
+    public static mysqlDb = "MYSQL_DB";
 }
 
 export class Defaults {
     public static mongoHost = "localhost";
     public static mongoPort = "27017";
     public static httpPort = "8080";
+    public static mysqlHost = "localhost";
 }
 
 export class ServiceFactory {
