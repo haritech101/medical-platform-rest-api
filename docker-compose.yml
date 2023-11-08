@@ -14,4 +14,16 @@ services:
     image: mongo:5.0.22
     volumes:
       - ".local/mongo-db:/data/db"
+  mysql:
+    image: mysql
+    volumes:
+      - "/tmp/.mysql-data:/var/lib/mysql"
+    ports:
+      - "3306:3306"
+      - "33060:33060"
+    environment:
+      - MYSQL_ROOT_PASSWORD=India360!
+      - MYSQL_USER=medical_admin
+      - MYSQL_PASSWORD=m3d1c@l
+      - MYSQL_DATABASE=medical_platform
 
